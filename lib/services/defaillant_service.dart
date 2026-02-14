@@ -19,9 +19,11 @@ class ApiService {
 }*/
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import '../config/api_endpoints.dart';
 
 class ApiService {
-  static const String baseUrl = 'http://10.0.2.2:5000/api';
+  /*static const String baseUrl = 'http://10.155.28.240:5000/api';*/
+  static const String baseUrl = ApiEndpoints.baseApi;
 
   // 🔹 Récupérer les contribuables défaillants par centre
   static Future<Map<String, dynamic>> getDefaillants(String centreName) async {

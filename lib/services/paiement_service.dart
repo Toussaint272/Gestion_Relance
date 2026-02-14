@@ -1,10 +1,11 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/paiement.dart';
+import '../config/api_endpoints.dart';
 
 class PaiementService {
-  static const String baseUrl = 'http://10.0.2.2:5000/api/paiementRoute';
-  // Raha amin'ny téléphone tena izy: soloina amin'ny IP an'ny backend, ex: 'http://192.168.43.10:5000/api/paiement1'
+  /*static const String baseUrl = 'http://10.155.28.240:5000/api/paiementRoute';*/
+  static const String baseUrl = ApiEndpoints.paiementBase;
 
   static Future<List<Paiement1>> fetchPaiements() async {
     final response = await http.get(Uri.parse(baseUrl));

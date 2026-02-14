@@ -562,9 +562,12 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:my_app/screens/declarationRetard_page.dart';
 import 'package:my_app/screens/filtre_declaration.dart';
 import 'package:my_app/screens/liste_agents1.dart';
+import 'package:my_app/screens/relance_historique_page.dart';
 import 'package:my_app/screens/relances_effectues.dart';
 import 'package:my_app/screens/totalDefaillant_page.dart';
 import 'package:my_app/screens/touts_contribuable.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../config/api_endpoints.dart';
 
 class StatsDashboardPage extends StatefulWidget {
   const StatsDashboardPage({super.key});
@@ -592,7 +595,8 @@ class _StatsDashboardPageState extends State<StatsDashboardPage> {
 
   Future<void> fetchAllStats() async {
     try {
-      const baseUrl = 'http://10.0.2.2:5000/api/stats';
+      /*const baseUrl = 'http://10.155.28.240:5000/api/stats';*/
+      const baseUrl = ApiEndpoints.statsBase;
 
       final overviewRes = await http.get(Uri.parse('$baseUrl/overview'));
       final paiementRes = await http.get(Uri.parse('$baseUrl/paiement-stats'));
@@ -644,33 +648,31 @@ class _StatsDashboardPageState extends State<StatsDashboardPage> {
         elevation: 4,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         color: color,
-        child: SizedBox(
-          width: 160,
-          height: 100,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                  ),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                title,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
                 ),
-                const Spacer(),
-                Text(
-                  '$value',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                  ),
+              ),
+              Text(
+                '$value',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
@@ -707,7 +709,7 @@ class _StatsDashboardPageState extends State<StatsDashboardPage> {
                   sections: [
                     PieChartSectionData(
                       value: valide.toDouble(),
-                      color: Colors.green,
+                      color: Color(0xFF5C8D89),
                       title:
                           'Valide\n${((valide / total) * 100).toStringAsFixed(1)}%',
                       radius: 70,
@@ -718,7 +720,7 @@ class _StatsDashboardPageState extends State<StatsDashboardPage> {
                     ),
                     PieChartSectionData(
                       value: nonValide.toDouble(),
-                      color: const Color.fromARGB(255, 255, 68, 68),
+                      color: Color(0xFFD9534F),
                       title:
                           'Non valide\n${((nonValide / total) * 100).toStringAsFixed(1)}%',
                       radius: 70,
@@ -740,7 +742,7 @@ class _StatsDashboardPageState extends State<StatsDashboardPage> {
                     Text(
                       'Valide',
                       style: TextStyle(
-                        color: Colors.green,
+                        color: Color(0xFF5C8D89),
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -751,10 +753,7 @@ class _StatsDashboardPageState extends State<StatsDashboardPage> {
                   children: [
                     Text(
                       'Non valide',
-                      style: TextStyle(
-                        color: const Color.fromARGB(255, 255, 68, 68),
-                        fontWeight: FontWeight.bold,
-                      ),
+                      style: TextStyle(color: Color(0xFFD9534F)),
                     ),
                     Text('$nonValide'),
                   ],
@@ -783,7 +782,7 @@ class _StatsDashboardPageState extends State<StatsDashboardPage> {
               BarChartRodData(
                 toY: double.parse(e.value['count'].toString()),
                 width: 14,
-                color: Colors.blueAccent,
+                color: Color(0xFF4C6C89),
               ),
             ],
           ),
@@ -848,9 +847,9 @@ class _StatsDashboardPageState extends State<StatsDashboardPage> {
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: ExpansionTile(
-        leading: const Icon(Icons.people, color: Colors.blueAccent),
+        leading: const Icon(Icons.people, color: Color(0xFF4C6C89)),
         title: const Text(
-          'Top Agents (par nombre de relances)',
+          'Top Agents Actifs (par nombre de relances)',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         children: topAgents.isEmpty
@@ -866,7 +865,7 @@ class _StatsDashboardPageState extends State<StatsDashboardPage> {
                     ListTile(
                       leading: const Icon(
                         Icons.person_outline,
-                        color: Colors.blue,
+                        color: Color(0xFF4C6C89),
                       ),
                       title: Text(
                         '${a['agent.nom'] ?? 'Inconnu'} ${a['agent.prenom'] ?? ''}',
@@ -876,6 +875,19 @@ class _StatsDashboardPageState extends State<StatsDashboardPage> {
                         '${a['total_relances']} relances',
                         style: const TextStyle(fontWeight: FontWeight.bold),
                       ),
+                      onTap: () async {
+                        final prefs = await SharedPreferences.getInstance();
+
+                        // 💾 Apetraka ao le matricule an’ilay agent cliqué
+                        await prefs.setString('agentMatricule', a['matricule']);
+
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const RelanceHistoriquePage(),
+                          ),
+                        );
+                      },
                     ),
                     const Divider(height: 1),
                   ],
@@ -900,7 +912,7 @@ class _StatsDashboardPageState extends State<StatsDashboardPage> {
       return BarChartGroupData(
         x: e.key,
         barRods: [
-          BarChartRodData(toY: count, width: 14, color: Colors.blueAccent),
+          BarChartRodData(toY: count, width: 14, color: Color(0xFF4C6C89)),
         ],
       );
     }).toList();
@@ -932,6 +944,7 @@ class _StatsDashboardPageState extends State<StatsDashboardPage> {
                     final percent = (value / total * 100).toStringAsFixed(1);
                     return PieChartSectionData(
                       value: value.toDouble(),
+                      color: const Color(0xFF4C6C89), // 🎨 couleur unique
                       title: "${e.key}\n$percent%",
                       radius: 70,
                       titleStyle: const TextStyle(
@@ -1002,14 +1015,18 @@ class _StatsDashboardPageState extends State<StatsDashboardPage> {
               padding: const EdgeInsets.all(16),
               child: Column(
                 children: [
-                  Wrap(
-                    spacing: 12,
-                    runSpacing: 12,
+                  GridView.count(
+                    crossAxisCount: 2,
+                    crossAxisSpacing: 12,
+                    mainAxisSpacing: 12,
+                    childAspectRatio: 1.3,
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
                     children: [
                       buildOverviewCard(
                         'Total Déclarations',
                         overviewData?['totalDeclarations'] ?? 0,
-                        Colors.blue,
+                        Color(0xFF4C6C89),
                         onTap: () {
                           Navigator.push(
                             context,
@@ -1022,7 +1039,7 @@ class _StatsDashboardPageState extends State<StatsDashboardPage> {
                       buildOverviewCard(
                         'En Retard',
                         overviewData?['enRetard'] ?? 0,
-                        Colors.blue,
+                        Color(0xFF5C8D89),
                         onTap: () {
                           Navigator.push(
                             context,
@@ -1035,7 +1052,7 @@ class _StatsDashboardPageState extends State<StatsDashboardPage> {
                       buildOverviewCard(
                         'Non Reçues',
                         overviewData?['nonRecues'] ?? 0,
-                        Colors.blue,
+                        Color(0xFF5C8D89),
                       ),
                       InkWell(
                         onTap: () {
@@ -1049,7 +1066,7 @@ class _StatsDashboardPageState extends State<StatsDashboardPage> {
                         child: buildOverviewCard(
                           'Total Contribuables',
                           overviewData?['totalContribuables'] ?? 0,
-                          Colors.blue,
+                          Color(0xFF4C6C89),
                         ),
                       ),
 
@@ -1058,10 +1075,10 @@ class _StatsDashboardPageState extends State<StatsDashboardPage> {
                         overviewData?['totalRelances'] ?? 0,
                         Colors.green,
                       ),*/
-                      buildOverviewCard(
+                      /*buildOverviewCard(
                         'Total Relances',
                         overviewData?['totalRelances'] ?? 0,
-                        Colors.green,
+                        Color(0xFF5C8D89),
                         onTap: () {
                           Navigator.push(
                             context,
@@ -1070,16 +1087,16 @@ class _StatsDashboardPageState extends State<StatsDashboardPage> {
                             ),
                           );
                         },
-                      ),
+                      ),*/
                       /*buildOverviewCard(
                         'Agents Actifs',
                         overviewData?['agentsActifs'] ?? 0,
                         Colors.purple,
                       ),*/
                       buildOverviewCard(
-                        'Agents Actifs',
+                        'Total Agents',
                         overviewData?['agentsActifs'] ?? 0,
-                        Colors.green,
+                        Color(0xFF5C8D89),
                         onTap: () {
                           Navigator.push(
                             context,
@@ -1106,7 +1123,7 @@ class _StatsDashboardPageState extends State<StatsDashboardPage> {
                         child: buildOverviewCard(
                           'Total Défaillants',
                           overviewData?['totalDefaillants'] ?? 0,
-                          const Color.fromARGB(255, 255, 68, 68),
+                          Color(0xFFD9534F),
                         ),
                       ),
                     ],

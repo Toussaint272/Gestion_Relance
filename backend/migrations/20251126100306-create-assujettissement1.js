@@ -2,60 +2,58 @@
 
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable('declaration1', {
-      N_decl: {
+    await queryInterface.createTable('assujettissement1', {
+      id_assuj: {
         type: Sequelize.INTEGER,
         primaryKey: true,
-        autoIncrement: true
+        autoIncrement: true,
+        allowNull: false
       },
-      tax_payer_no: {
+      fiscal_no: {
         type: Sequelize.STRING(50),
         allowNull: false
       },
-      tax_type_no: {
+      annee: {
+        type: Sequelize.INTEGER,
+        allowNull: false
+      },
+      periodicite: {
         type: Sequelize.STRING(30),
         allowNull: true
       },
-      tax_periode: {
+      debut: {
         type: Sequelize.DATE,
         allowNull: true
       },
-      save_date: {
+      fin: {
         type: Sequelize.DATE,
         allowNull: true
       },
-      received_date: {
-        type: Sequelize.DATE,
-        allowNull: true
+      actif: {
+        type: Sequelize.BOOLEAN,
+        allowNull: false,
+        defaultValue: true
       },
-      date_echeance: {
-        type: Sequelize.DATE,
+      etat: {
+        type: Sequelize.STRING(50),
         allowNull: true
-      },
-      motif: {
-        type: Sequelize.TEXT,
-        allowNull: true
-      },
-      montant_liquide: {        // 🔹 Champ ajouté
-        type: Sequelize.DECIMAL(15, 2),
-        allowNull: true,
-        defaultValue: 0.00
       },
       createdAt: {
         allowNull: false,
         type: Sequelize.DATE,
         defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
       },
+      
       updatedAt: {
         allowNull: false,
         type: Sequelize.DATE,
         defaultValue: Sequelize.literal('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP')
       }
-
+      
     });
   },
 
   async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable('declaration1');
+    await queryInterface.dropTable('assujettissement1');
   }
 };

@@ -1,8 +1,10 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import '../config/api_endpoints.dart';
 
 class DeclarationService {
-  final String baseUrl = "http://10.0.2.2:5000/api";
+  /*final String baseUrl = "http://10.155.28.240:5000/api";*/
+  final String baseUrl = ApiEndpoints.baseApi;
 
   // 🔹 Récupérer les déclarations d’un contribuable
   Future<List<dynamic>> getDeclarations(String taxPayerNo) async {

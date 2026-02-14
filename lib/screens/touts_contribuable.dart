@@ -1,9 +1,11 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'fiche_contribuable.dart'; // ✅ import de la fiche
+import 'package:my_app/screens/fichetotal_contribuable.dart';
+import 'fiche_contribuable.dart';
+import '../config/api_endpoints.dart';
 
-// 🔹 Modèle Contribuable
+// 🔹 Modèle Contribuable (Tsy niova)
 class Contribuable1 {
   final int id;
   final String taxPayerNo;
@@ -60,7 +62,7 @@ class _ListeContribuablesState extends State<ListeContribuables1> {
   bool isLoading = true;
   String searchNif = '';
 
-  final String baseUrl = 'http://10.0.2.2:5000/api/contribuableRoute';
+  final String baseUrl = ApiEndpoints.contribuableBase;
 
   @override
   void initState() {
@@ -68,11 +70,13 @@ class _ListeContribuablesState extends State<ListeContribuables1> {
     fetchContribuables();
   }
 
+  // --- Logic Tsy niova ---
   Future<void> fetchContribuables() async {
     try {
       final res = await http.get(Uri.parse(baseUrl));
       if (res.statusCode == 200) {
         final List data = jsonDecode(res.body);
+        if (!mounted) return;
         setState(() {
           contribuables = data.map((e) => Contribuable1.fromJson(e)).toList();
           isLoading = false;
@@ -81,6 +85,7 @@ class _ListeContribuablesState extends State<ListeContribuables1> {
         throw Exception('Erreur serveur ${res.statusCode}');
       }
     } catch (e) {
+      if (!mounted) return;
       setState(() => isLoading = false);
       ScaffoldMessenger.of(
         context,
@@ -90,7 +95,7 @@ class _ListeContribuablesState extends State<ListeContribuables1> {
 
   @override
   Widget build(BuildContext context) {
-    // 🔍 Filtrer selon NIF
+    // Logic filtrage tsy niova
     List<Contribuable1> filtered = contribuables.where((c) {
       final query = searchNif.toUpperCase();
       return c.nif.toUpperCase().contains(query) ||
@@ -98,94 +103,179 @@ class _ListeContribuablesState extends State<ListeContribuables1> {
     }).toList();
 
     return Scaffold(
+      backgroundColor: const Color(0xFFF4F7F9),
       appBar: AppBar(
         title: const Text(
           'Liste des Contribuables',
-          style: TextStyle(color: Colors.white),
+          style: TextStyle(fontWeight: FontWeight.bold),
         ),
         backgroundColor: const Color(0xFF4C6C89),
-        iconTheme: const IconThemeData(color: Colors.white),
+        foregroundColor: Colors.white,
+        elevation: 0,
+        centerTitle: true,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            // 🔎 Barre de recherche
-            TextField(
-              decoration: InputDecoration(
-                labelText: 'Rechercher par NIF',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                prefixIcon: const Icon(Icons.search),
-              ),
-              onChanged: (value) => setState(() => searchNif = value),
-            ),
-            const SizedBox(height: 20),
+      body: Column(
+        children: [
+          // 🔎 Barre de recherche (Hatsarana ny Ergonomie)
+          _buildSearchBar(),
 
-            // 🧾 Liste des contribuables
-            Expanded(
-              child: isLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : ListView.builder(
-                      itemCount: filtered.length,
-                      itemBuilder: (context, index) {
-                        final c = filtered[index];
-                        return Card(
-                          margin: const EdgeInsets.symmetric(vertical: 8),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          elevation: 3,
-                          child: ListTile(
-                            title: Text(
-                              c.rs,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            subtitle: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text('NIF: ${c.taxPayerNo}'),
-                                Text('Centre: ${c.centre}'),
-                                Text('Adresse: ${c.adresse}'),
-                                Text('Activité: ${c.activite}'),
-                                Text('Telephone: ${c.phone}'),
-                                Text(
-                                  'Statut: ${c.actif ? "Actif" : "Inactif"}',
-                                  style: TextStyle(
-                                    color: c.actif ? Colors.green : Colors.red,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            /*trailing: IconButton(
-                              icon: const Icon(
-                                Icons.info_outline,
-                                color: Colors.blueAccent,
-                              ),
-                              tooltip: 'Détails',
-                              onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) => FicheContribuableScreen(
-                                      taxPayerNo: c
-                                          .nif, // ⚠️ ataovy mifanaraka amin'ny backend
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),*/
-                          ),
-                        );
-                      },
-                    ),
-            ),
-          ],
+          // 🧾 Liste des contribuables
+          Expanded(
+            child: isLoading
+                ? const Center(
+                    child: CircularProgressIndicator(color: Color(0xFF4C6C89)),
+                  )
+                : _buildList(filtered),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // --- UI COMPONENTS ---
+
+  Widget _buildSearchBar() {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+      color: const Color(0xFF4C6C89),
+      child: TextField(
+        onChanged: (value) => setState(() => searchNif = value),
+        style: const TextStyle(color: Colors.black87),
+        decoration: InputDecoration(
+          hintText: 'Rechercher par NIF ou Nom...',
+          hintStyle: TextStyle(color: Colors.grey.shade600),
+          filled: true,
+          fillColor: Colors.white,
+          prefixIcon: const Icon(Icons.search, color: Color(0xFF4C6C89)),
+          contentPadding: const EdgeInsets.symmetric(vertical: 0),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(15),
+            borderSide: BorderSide.none,
+          ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildList(List<Contribuable1> list) {
+    if (list.isEmpty) {
+      return const Center(child: Text("Aucun contribuable trouvé"));
+    }
+    return ListView.builder(
+      padding: const EdgeInsets.all(12),
+      itemCount: list.length,
+      itemBuilder: (context, index) {
+        final c = list[index];
+        return Card(
+          margin: const EdgeInsets.only(bottom: 12),
+          elevation: 2,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: InkWell(
+            // Fampitomboana ny zone de clic ho an'ny ergonomie
+            borderRadius: BorderRadius.circular(16),
+            onTap: () => _navigateToDetails(c),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          c.rs.toUpperCase(),
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                            color: Color(0xFF2C3E50),
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      _buildStatusBadge(c.actif),
+                    ],
+                  ),
+                  const Divider(height: 20),
+                  _buildIconInfo(Icons.fingerprint, "NIF: ${c.taxPayerNo}"),
+                  _buildIconInfo(Icons.business, "Centre: ${c.centre}"),
+                  _buildIconInfo(
+                    Icons.location_on_outlined,
+                    "Adresse: ${c.adresse}",
+                  ),
+                  _buildIconInfo(Icons.work_outline, "Activité: ${c.activite}"),
+                  const SizedBox(height: 10),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton.icon(
+                      onPressed: () => _navigateToDetails(c),
+                      icon: const Icon(Icons.arrow_forward_ios, size: 14),
+                      label: const Text("Détails"),
+                      style: TextButton.styleFrom(
+                        foregroundColor: const Color(0xFF4C6C89),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildIconInfo(IconData icon, String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Row(
+        children: [
+          Icon(icon, size: 16, color: Colors.grey.shade600),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              text,
+              style: TextStyle(color: Colors.grey.shade800, fontSize: 13),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatusBadge(bool isActive) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: isActive
+            ? Colors.green.withOpacity(0.1)
+            : Colors.red.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isActive ? Colors.green : Colors.red,
+          width: 0.5,
+        ),
+      ),
+      child: Text(
+        isActive ? "ACTIF" : "INACTIF",
+        style: TextStyle(
+          color: isActive ? Colors.green.shade700 : Colors.red.shade700,
+          fontSize: 10,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+
+  void _navigateToDetails(Contribuable1 c) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => FicheContribuableScreen1(taxPayerNo: c.nif),
       ),
     );
   }

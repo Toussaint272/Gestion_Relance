@@ -72,8 +72,6 @@ Relance1.belongsTo(User1, {
 module.exports = Relance1;*/
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/db');
-
-//const Paiement1 = require('./Paiement1');
 const Declaration1 = require('./Declaration1');
 const User1 = require('./User1');
 const Contribuable1 = require('./Contribuable1');
@@ -94,13 +92,9 @@ const Relance1 = sequelize.define('Relance1', {
     allowNull: true,
   },
 
-  /*id_agent: {
-    type: DataTypes.INTEGER,
-    allowNull: true,
-  },*/
   matricule: {
     type: DataTypes.STRING,
-    allowNull: true, // ho agent connecte
+    allowNull: true, // agent connecte
   },
 
   date_envoi: {
@@ -127,28 +121,15 @@ const Relance1 = sequelize.define('Relance1', {
   timestamps: true,
 });
 
-// Associations
-
-/*Relance1.belongsTo(Paiement1, {
-  foreignKey: 'id_paiement',
-  as: 'paiement',
-});*/
-
 Relance1.belongsTo(Declaration1, {
   foreignKey: 'N_decl',
   as: 'declaration',
 });
 
-/*Relance1.belongsTo(User1, {
-  foreignKey: 'id_agent',
-  as: 'agent',
-});*/
 Relance1.belongsTo(Contribuable1, {
   foreignKey: 'tax_payer_no',
   targetKey: 'tax_payer_no'
 });
-
-
 
 module.exports = Relance1;
 

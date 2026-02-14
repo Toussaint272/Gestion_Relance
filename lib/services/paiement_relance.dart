@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import '../config/api_endpoints.dart';
 
 class PaiementService1 {
   static Future<void> sendRelance({
@@ -9,7 +10,8 @@ class PaiementService1 {
 
     //required String message,
   }) async {
-    final url = Uri.parse('http://10.0.2.2:5000/api/relanceRoute/send');
+    /*final url = Uri.parse('http://10.155.28.240:5000/api/relanceRoute/send');*/
+    final url = Uri.parse(ApiEndpoints.relanceSend);
     final response = await http.post(
       url,
       headers: {'Content-Type': 'application/json'},

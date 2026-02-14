@@ -32,9 +32,11 @@ class RelanceService {
 }*/
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import '../config/api_endpoints.dart';
 
 class RelanceService {
-  static const String baseUrl = "http://10.0.2.2:5000/api";
+  /*static const String baseUrl = "http://10.155.28.240:5000/api";*/
+  static const String baseUrl = ApiEndpoints.baseApi;
 
   /// Filtrer relance par centre fiscal
   static Future<List<dynamic>> getRelanceByCentre(String centre) async {

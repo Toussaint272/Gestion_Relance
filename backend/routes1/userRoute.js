@@ -10,6 +10,7 @@ router.post('/login', userController.login);
 
 
 // CRUD utilisateurs
+router.post("/register-admin", userController.registerAdmin);
 router.get('/', userController.getAllUsers);
 router.post('/', userController.createUser);
 router.put('/:id', userController.updateUser);

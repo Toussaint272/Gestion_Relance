@@ -109,10 +109,28 @@ Paiement1.belongsTo(Contribuable1, {
 
 
 // Hook automatique avant insertion/mise à jour
-Paiement1.beforeSave(async (paiement) => {
+/*Paiement1.beforeSave(async (paiement) => {
   const declaration = await Declaration1.findOne({ where: { N_decl: paiement.N_decl } });
   if (declaration) {
     paiement.reste_a_recouvrer = parseFloat(declaration.montant_liquide) - parseFloat(paiement.montant_payer);
+  }
+});*/
+// ⭐ HOOK AUTOMATIQUE : Calcul + Validation
+Paiement1.beforeSave(async (paiement) => {
+  const decl = await Declaration1.findOne({ where: { N_decl: paiement.N_decl } });
+
+  if (!decl) return;
+
+  const montantLiquide = parseFloat(decl.montant_liquide);
+  const montantPaye = parseFloat(paiement.montant_payer);
+
+  paiement.reste_a_recouvrer = montantLiquide - montantPaye;
+
+  // 👇 AUTOMATIQUE VALIDATION
+  if (paiement.reste_a_recouvrer <= 0) {
+    paiement.valider = true;   // efa vita fandoavana
+  } else {
+    paiement.valider = false;  // mbola misy reste
   }
 });
 
